@@ -24,7 +24,7 @@ with image.imports():
     from fastapi import Response
 
 
-@stub.cls(image=image, gpu="h100", keep_warm=1)
+@stub.cls(image=image, gpu="h100", keep_warm=1, container_idle_timeout=300)
 class Model:
     @modal.build()
     @modal.enter()
