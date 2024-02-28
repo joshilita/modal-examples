@@ -44,6 +44,7 @@ class Model:
         self,
         prompt="A cinematic shot of a baby racoon wearing an intricate italian priest robe.",
     ):
+        print(prompt)
         image = self.pipe(
             prompt, num_inference_steps=50, guidance_scale=3
         ).images[0]
