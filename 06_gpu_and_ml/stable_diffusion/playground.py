@@ -24,7 +24,7 @@ with image.imports():
     from fastapi import Response
 
 
-@stub.cls(image=image, gpu="a100")
+@stub.cls(image=image, gpu="a100", keep_warm=1)
 class Model:
     @modal.build()
     @modal.enter()
@@ -63,8 +63,9 @@ web_image = modal.Image.debian_slim().pip_install("jinja2")
     image=web_image,
     mounts=[modal.Mount.from_local_dir(frontend_path, remote_path="/assets")],
     allow_concurrent_inputs=20,
+    keep_warm=1,
 )
-@modal.asgi_app()
+@modal.asgi_app(label="playground")
 def app():
     import fastapi.staticfiles
     from fastapi import FastAPI
