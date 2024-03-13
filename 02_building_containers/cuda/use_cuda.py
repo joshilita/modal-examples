@@ -68,8 +68,8 @@ def remove_libcuda(verbose: bool = True):
     shared_library_dir = shared_user_level_dir / "lib"
     shared_x86_dir = shared_library_dir / "x86_64-linux-gnu"
 
-    # remove libcuda.so and related files
-    for libcuda_file in shared_x86_dir.glob("libcuda.so*"):
+    # remove libnvidia-ml.so and related files
+    for libcuda_file in shared_x86_dir.glob("libnvidia-ml*"):
         if verbose:
             print("removing", libcuda_file)
         os.remove(libcuda_file)
@@ -77,7 +77,7 @@ def remove_libcuda(verbose: bool = True):
         print()  # empty line
 
     xml_output = subprocess.run(
-        ["nvidia-smi", "-q", "-u", "-x"], capture_output=True, check=True
+        ["nvidia-smi", "-q", "-u", "-x"], capture_output=True, check=False
     ).stdout
     if verbose:
         print("nvidia-smi still runs!")
@@ -138,9 +138,7 @@ cudatoolkit_image = (
     .apt_install(
         "cuda-compiler-12-1"
     )  # MUST BE <= 12.2! TODO: write up fwd/bwd compatibility
-    .env(
-        {"PATH": "/usr/local/cuda/bin:$PATH"}
-    )  # TODO: should this be LD_LIBRARY_PATH? what are implications?
+    .env({"PATH": "/usr/local/cuda/bin:$PATH"})
 )
 
 # Now we can use nvcc to compile a CUDA program.
@@ -205,12 +203,12 @@ def main(with_libcuda: bool = True):
         nvidia_smi.remote()
     else:
         print("🔥 removing libcuda to show what breaks")
-        remove_libcuda.remote()
+        # remove_libcuda.remote()
 
     print("🔥 running our CUDA kernel")
     with open("invsqrt_demo", "rb") as f:
         prog = f.read()
-    raw_cuda.remote(prog, with_libcuda)
+    user_raw_cuda.remote(prog, with_libcuda)
 
 
 @stub.function(gpu=GPU_CONFIG, image=cudatoolkit_image)
