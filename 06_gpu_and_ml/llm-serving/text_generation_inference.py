@@ -120,6 +120,7 @@ GPU_CONFIG = gpu.H100(count=2)  # 2 H100s
     container_idle_timeout=60 * 10,
     timeout=60 * 60,
     image=tgi_image,
+    _experimental_boost=True,
 )
 class Model:
     @enter()
@@ -176,7 +177,7 @@ class Model:
 
         return result.generated_text
 
-    @method()
+    @method(keep_warm=1)
     async def generate_stream(self, question: str):
         prompt = self.template.format(user=question)
 
@@ -215,8 +216,9 @@ frontend_path = Path(__file__).parent.parent / "llm-frontend"
     keep_warm=1,
     allow_concurrent_inputs=10,
     timeout=60 * 10,
+    _experimental_boost=True,
 )
-@asgi_app(label="llama3")
+@asgi_app(label="llama3", custom_domains=["modal.chat"])
 def tgi_app():
     import json
 
