@@ -72,7 +72,7 @@ vllm_image = (
         "hf-transfer==0.1.6",
         "huggingface_hub==0.22.2",
     )
-    .pip_install("flash-attn==2.5.7 --no-build-isolation")
+    .pip_install("flash-attn==2.5.7", "--no-build-isolation")
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
     .run_function(
         download_model_to_image,
