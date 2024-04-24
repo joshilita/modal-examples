@@ -24,8 +24,8 @@ from modal import Image, Mount, Secret, Stub, asgi_app, enter, exit, gpu, method
 #
 # Any model supported by TGI can be chosen here.
 
-MODEL_ID = "meta-llama/Llama-2-70b-chat-hf"
-REVISION = "e1ce257bd76895e0864f3b4d6c7ed3c4cdec93e2"
+MODEL_ID = "georgesung/llama2_7b_chat_uncensored"
+REVISION = "abef8a13940181307bd8343699e80018b4b41528"
 # Add `["--quantize", "gptq"]` for TheBloke GPTQ models.
 LAUNCH_FLAGS = [
     "--model-id",

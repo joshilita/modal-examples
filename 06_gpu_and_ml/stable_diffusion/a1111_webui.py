@@ -19,7 +19,7 @@ PORT = 8000
 # This takes a few steps because A1111 usually install its dependencies on launch via a script.
 # The process may take a few minutes the first time, but subsequent image builds should only take a few seconds.
 
-a1111_image = (
+a12_image = (
     Image.debian_slim(python_version="3.11")
     .apt_install(
         "wget",
@@ -30,20 +30,16 @@ a1111_image = (
     )
     .env({"LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"})
     .run_commands(
-        "git clone --depth 1 --branch v1.7.0 https://github.com/AUTOMATIC1111/stable-diffusion-webui /webui",
-        "python -m venv /webui/venv",
-        "cd /webui && . venv/bin/activate && "
-        + "python -c 'from modules import launch_utils; launch_utils.prepare_environment()' --xformers",
-        gpu="a10g",
-    )
-    .run_commands(
-        "cd /webui && . venv/bin/activate && "
-        + "python -c 'from modules import shared_init, initialize; shared_init.initialize(); initialize.initialize()'",
-        gpu="a10g",
+
+        
+        # "mkdir /yes && cd /yes && wget https://huggingface.co/mradermacher/Fimbulvetr-11B-v2-i1-GGUF/resolve/main/Fimbulvetr-11B-v2.i1-Q6_K.gguf?download=true -O model.gguf && curl -fLo koboldcpp https://github.com/LostRuins/koboldcpp/releases/latest/download/koboldcpp-linux-x64 && chmod +x koboldcpp",
+        # "mkdir /yes && cd /yes && wget https://huggingface.co/Lewdiculous/Nyanade_Stunna-Maid-7B-v0.2-GGUF-IQ-Imatrix/resolve/main/Nyanade_Stunna-Maid-7B-v0.2-Q8_0-imat.gguf?download=true -O model.gguf && curl -fLo koboldcpp https://github.com/LostRuins/koboldcpp/releases/latest/download/koboldcpp-linux-x64 && chmod +x koboldcpp",
+        "mkdir /yes && cd /yes && wget https://huggingface.co/LoneStriker/opus-v1.2-llama-3-8b-GGUF/resolve/main/opus-v1.2-llama-3-8b-Q6_K.gguf?download=true -O model.gguf && curl -fLo koboldcpp https://github.com/LostRuins/koboldcpp/releases/latest/download/koboldcpp-linux-x64 && chmod +x koboldcpp",
+        "cd /yes && wget https://huggingface.co/cjpais/llava-1.6-mistral-7b-gguf/resolve/main/mmproj-model-f16.gguf?download=true -O other.gguf"
     )
 )
 
-stub = Stub("example-a1111-webui", image=a1111_image)
+stub = Stub("example-a2-webui", image=a12_image)
 
 # After defining the custom container image, we start the server with `accelerate launch`. This
 # function is also where you would configure hardware resources, CPU/memory, and timeouts.
@@ -55,29 +51,21 @@ stub = Stub("example-a1111-webui", image=a1111_image)
 
 @stub.function(
     gpu="a10g",
-    cpu=2,
-    memory=1024,
+    cpu=1,
+    memory=20000,
     timeout=3600,
     # Allows 100 concurrent requests per container.
     allow_concurrent_inputs=100,
+    container_idle_timeout=300,
     # Keep at least one instance of the server running.
-    keep_warm=1,
+    # keep_warm=1,
 )
 @web_server(port=PORT, startup_timeout=180)
 def run():
     START_COMMAND = f"""
-cd /webui && \
-. venv/bin/activate && \
-accelerate launch \
-    --num_processes=1 \
-    --num_machines=1 \
-    --mixed_precision=fp16 \
-    --dynamo_backend=inductor \
-    --num_cpu_threads_per_process=6 \
-    /webui/launch.py \
-        --skip-prepare-environment \
-        --no-gradio-queue \
-        --listen \
-        --port {PORT}
+    cd /yes  && ./koboldcpp --model /yes/model.gguf --port 8000 --skiplauncher --host 0.0.0.0 --threads 2 --blasthreads 2 --nommap --usecublas --gpulayers 255 --highpriority --blasbatchsize 512 --contextsize 8192 --mmproj /yes/other.gguf
+
+
+        
 """
     subprocess.Popen(START_COMMAND, shell=True)
